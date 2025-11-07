@@ -1,0 +1,45 @@
+modules:
+  jira:customFieldType:
+    - key: cft-lookup-custom-field-type-ui-kit-2-hello-world
+      name: cft_lookup
+      description: A hello world custom field.
+      type: string
+      view:
+        render: native
+        resource: main
+        experience:
+          - issue-view
+          - portal-view
+      edit:
+        resource: edit
+        render: native
+        isInline: true
+        experience:
+          - issue-create
+          - issue-transition
+          - issue-view
+          - portal-request
+        validation:
+          expression: value == null || !!value.match(configuration?.regex || "^.+$")
+          errorMessage: The value is invalid
+      contextConfig:
+        resource: config
+        layout: basic
+        render: native
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+  - key: edit
+    path: src/frontend/edit.jsx
+  - key: config
+    path: src/frontend/context-config.jsx
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work 
+app:
+  runtime:
+    name: nodejs22.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/e0b1d249-b05b-454b-8361-d21e2c71cf50
