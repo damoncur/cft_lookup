@@ -43,6 +43,18 @@ const View = () => {
     setF3("");
   };
 
+  const handleModalSearch = () => {
+    // Handle search button click in modal
+    console.log("Search clicked with values:", {
+      productId: f1,
+      productName: f2,
+      versionId: f3,
+    });
+
+    // You can add your search logic here
+    // For now, we'll just log the values
+  };
+
   return (
     <>
       <Stack space="space.100">
@@ -50,14 +62,13 @@ const View = () => {
           <Box as="span" xcss={{ width: "32px" }}>
             <Tooltip text="Click to search">
               <Button
-                appearance="subtle-link"
                 iconBefore="search"
                 spacing="compact"
                 onClick={handleSearchClick}
               />
             </Tooltip>
           </Box>
-          <Text>{`${fieldValue || "world"}!`}</Text>
+          <Text size="small">{`${fieldValue || "world"}!`}</Text>
         </Inline>
       </Stack>
 
@@ -68,8 +79,8 @@ const View = () => {
               <ModalTitle>Field Search Results</ModalTitle>
             </ModalHeader>
             <ModalBody>
-              <Stack space="space.200">
-                <Text>You clicked the search button for the field value:</Text>
+              <Stack space="space.100">
+                <Text size="small">You clicked the search button for the field value:</Text>
                 <Box
                   xcss={{
                     padding: "space.100",
@@ -77,7 +88,7 @@ const View = () => {
                     borderRadius: "4px",
                   }}
                 >
-                  <Text as="strong">{fieldValue || "No value entered"}</Text>
+                  <Text as="strong" size="small">{fieldValue || "No value entered"}</Text>
                 </Box>
                 <Inline space="space.100" alignBlock="end">
                   <Stack>
@@ -85,33 +96,40 @@ const View = () => {
                       <Text size="small">Product Id</Text>
                     </Label>
                     <Textfield
-                    id="f1-input"
-                    value={f1}
-                    onChange={(e) => setF1(e.target.value)}
-                  />
+                      id="f1-input"
+                      value={f1}
+                      onChange={(e) => setF1(e.target.value)}
+                      spacing="compact"
+                    />
                   </Stack>
                   <Stack>
                     <Label htmlFor="f2-input">
                       <Text size="small">Product Name</Text>
                     </Label>
                     <Textfield
-                    id="f2-input"
-                    value={f2}
-                    onChange={(e) => setF2(e.target.value)}
-                  />
+                      id="f2-input"
+                      value={f2}
+                      onChange={(e) => setF2(e.target.value)}
+                      spacing="compact"
+                    />
                   </Stack>
                   <Stack>
                     <Label htmlFor="f3-input">
                       <Text size="small">Version Id</Text>
                     </Label>
                     <Textfield
-                    id="f3-input"
-                    value={f3}
-                    onChange={(e) => setF3(e.target.value)}
-                  />
+                      id="f3-input"
+                      value={f3}
+                      onChange={(e) => setF3(e.target.value)}
+                      spacing="compact"
+                    />
                   </Stack>
                 </Inline>
-                <Text>
+                <Box>
+                  <Button onClick={handleModalSearch}>Search </Button>
+                </Box>
+
+                <Text size="small">
                   This modal demonstrates how you can display search results,
                   field information, or any other content instead of using basic
                   alerts. You could integrate with APIs, show lookup results, or
