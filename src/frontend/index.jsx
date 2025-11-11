@@ -22,6 +22,386 @@ import ForgeReconciler, {
 } from "@forge/react";
 import { view } from "@forge/bridge";
 
+// Popular tech giant company names (top 10)
+const TECH_COMPANIES = [
+  "Microsoft",
+  "Apple", 
+  "Google",
+  "Amazon",
+  "Meta",
+  "Netflix",
+  "Salesforce",
+  "Oracle",
+  "Adobe",
+  "NVIDIA"
+];
+
+// Products map for each tech company
+const COMPANY_PRODUCTS = {
+  "Microsoft": [
+    "Windows", "Office 365", "Azure", "Teams", "Visual Studio", 
+    "Xbox", "Surface", "SQL Server", "Power BI", "SharePoint"
+  ],
+  "Apple": [
+    "iPhone", "iPad", "Mac", "Apple Watch", "AirPods", 
+    "macOS", "iOS", "Apple TV", "Safari", "iCloud"
+  ],
+  "Google": [
+    "Search", "Gmail", "Android", "Chrome", "YouTube", 
+    "Google Cloud", "Drive", "Maps", "Ads", "Workspace"
+  ],
+  "Amazon": [
+    "AWS", "Prime", "Alexa", "Kindle", "Echo", 
+    "S3", "EC2", "Lambda", "DynamoDB", "Fire TV"
+  ],
+  "Meta": [
+    "Facebook", "Instagram", "WhatsApp", "Messenger", "Portal", 
+    "Oculus", "Workplace", "Reality Labs", "Threads", "Quest"
+  ],
+  "Netflix": [
+    "Streaming Service", "Originals", "Downloads", "Profiles", "Games", 
+    "Interactive Content", "4K HDR", "Dolby Atmos", "Kids Mode", "Mobile App"
+  ],
+  "Salesforce": [
+    "CRM", "Sales Cloud", "Service Cloud", "Marketing Cloud", "Commerce Cloud", 
+    "Platform", "Analytics", "Einstein AI", "Tableau", "Slack"
+  ],
+  "Oracle": [
+    "Database", "Cloud Infrastructure", "Java", "MySQL", "WebLogic", 
+    "Enterprise Manager", "Fusion Applications", "Autonomous Database", "Exadata", "HCM Cloud"
+  ],
+  "Adobe": [
+    "Photoshop", "Illustrator", "Premiere Pro", "After Effects", "Acrobat", 
+    "Creative Cloud", "Experience Manager", "Analytics", "Target", "Campaign"
+  ],
+  "NVIDIA": [
+    "GeForce", "RTX", "CUDA", "Omniverse", "Drive", 
+    "Jetson", "Clara", "DGX", "A100", "Shield"
+  ]
+};
+
+// Product releases organized by company and product
+const PRODUCT_RELEASES = {
+  "Microsoft": {
+    "Windows": ["11 23H2", "11 22H2", "10 22H2", "Server 2022"],
+    "Office 365": ["2024.1", "2023.12", "2023.11", "Enterprise"],
+    "Azure": ["v2.1", "v2.0", "Government", "Stack"],
+    "Teams": ["1.6.0", "1.5.12", "Phone 1.4", "Rooms 4.8"],
+    "Visual Studio": ["2022 17.8", "2022 17.7", "Code 1.85", "Enterprise"],
+    "Xbox": ["Series X/S", "One X", "One S", "Game Pass"],
+    "Surface": ["Pro 9", "Laptop 5", "Studio 2+", "Go 4"],
+    "SQL Server": ["2022 CU8", "2019 CU22", "2017 CU31", "Express"],
+    "Power BI": ["Dec 2023", "Nov 2023", "Premium", "Desktop"],
+    "SharePoint": ["Online", "2019", "2016", "Server"]
+  },
+  "Apple": {
+    "iPhone": ["15.1", "15 Pro", "14.8", "SE 3rd"],
+    "iPad": ["Pro M2", "Air 5th", "10th Gen", "Mini 6th"],
+    "Mac": ["M3 Pro", "M2 Ultra", "M1 Max", "Intel"],
+    "Apple Watch": ["Series 9", "Ultra 2", "SE 2nd", "Series 8"],
+    "AirPods": ["Pro 2nd", "3rd Gen", "Max 2", "2nd Gen"],
+    "macOS": ["Sonoma 14.2", "Ventura 13.6", "Monterey 12.7", "Big Sur"],
+    "iOS": ["17.2", "16.7", "15.8", "14.8"],
+    "Apple TV": ["4K 3rd", "HD 2nd", "4K 2nd", "App 2.0"],
+    "Safari": ["17.2", "16.6", "Technology Preview", "15.6"],
+    "iCloud": ["2023.11", "Drive 14", "Photos 13", "Mail 16"]
+  },
+  "Google": {
+    "Search": ["Universal 2023", "AI Overview", "Lens 3.0", "Scholar"],
+    "Gmail": ["2023.12", "Confidential", "Offline 6.0", "Enterprise"],
+    "Android": ["14", "13", "12L", "Go Edition"],
+    "Chrome": ["120.0", "119.0", "Dev 121", "Beta 120"],
+    "YouTube": ["18.49", "TV 4.0", "Premium 2.0", "Shorts 1.5"],
+    "Google Cloud": ["2023.12", "Vertex AI", "BigQuery 3.0", "Functions v2"],
+    "Drive": ["Desktop 84", "Mobile 2.23", "Enterprise", "One 15GB"],
+    "Maps": ["11.109", "Platform 3.55", "Earth 10.46", "Navigation"],
+    "Ads": ["Google Ads 2023", "AdSense 1.21", "Analytics GA4", "Manager"],
+    "Workspace": ["Enterprise Plus", "Business", "Education", "Essentials"]
+  },
+  "Amazon": {
+    "AWS": ["Global 2023", "GovCloud", "Local Zones", "Wavelength"],
+    "Prime": ["Individual", "Family 6", "Student", "Gaming"],
+    "Alexa": ["4th Gen", "Show 15", "Dot 5th", "Auto 2nd"],
+    "Kindle": ["Paperwhite 11th", "Oasis 10th", "Scribe", "Basic 2022"],
+    "Echo": ["4th Gen", "Dot 5th", "Show 15", "Studio"],
+    "S3": ["Standard", "Glacier Instant", "Deep Archive", "Express One"],
+    "EC2": ["M7i", "C7g", "R7g", "T4g"],
+    "Lambda": ["Runtime 2023", "Extensions", "Container", "Layers"],
+    "DynamoDB": ["Standard", "Global Tables v2", "Accelerator", "PartiQL"],
+    "Fire TV": ["Stick 4K Max", "Cube 3rd", "TV 55\"", "Edition"]
+  },
+  "Meta": {
+    "Facebook": ["Web 2023.12", "Mobile 442", "Lite 384", "Business"],
+    "Instagram": ["Mobile 312", "Threads 1.1", "Reels 2.0", "Stories 5.0"],
+    "WhatsApp": ["2.23.24", "Business 2.23", "Web 2.2350", "Desktop 2.2347"],
+    "Messenger": ["Mobile 438", "Desktop 198", "Kids 240", "Rooms 4.0"],
+    "Portal": ["Portal+ v6", "Go v4", "TV v8", "Mini v5"],
+    "Oculus": ["Quest 3", "Quest 2 v57", "Rift S", "Link 2.0"],
+    "Workplace": ["Standard 2023", "Advanced", "Enterprise", "Essential"],
+    "Reality Labs": ["Horizon 3.0", "Spark AR 178", "Research", "Avatar SDK"],
+    "Threads": ["Mobile 1.1.12", "Web Beta", "Desktop Preview", "API v1"],
+    "Quest": ["v57", "Pro", "Business", "Link PC"]
+  },
+  "Netflix": {
+    "Streaming Service": ["Standard", "Premium 4K", "Basic", "Mobile"],
+    "Originals": ["Series 2023", "Films 2023", "Documentaries", "International"],
+    "Downloads": ["Smart Downloads", "Offline", "Mobile Only", "SD Card"],
+    "Profiles": ["Standard", "Kids", "PIN Protected", "Auto-Play"],
+    "Games": ["Mobile 23.1", "Trivia", "Puzzle", "Adventure"],
+    "Interactive Content": ["Bandersnatch 2.0", "Carmen Sandiego", "Trivia", "Quiz"],
+    "4K HDR": ["Ultra HD", "HDR10", "Dolby Vision", "Standard HDR"],
+    "Dolby Atmos": ["5.1 Surround", "Spatial Audio", "Headphone", "Home Theater"],
+    "Kids Mode": ["Preschool", "Big Kids", "Family", "Educational"],
+    "Mobile App": ["Android 8.108", "iOS 16.34", "Tablet", "Phone"]
+  },
+  "Salesforce": {
+    "CRM": ["Unlimited", "Enterprise", "Professional", "Essentials"],
+    "Sales Cloud": ["Unlimited", "Enterprise", "Professional", "Lightning"],
+    "Service Cloud": ["Unlimited", "Enterprise", "Professional", "Voice"],
+    "Marketing Cloud": ["Growth", "Plus", "Advanced", "Premium"],
+    "Commerce Cloud": ["B2C", "B2B", "Order Management", "Einstein"],
+    "Platform": ["Lightning", "Apex", "Visualforce", "Flow"],
+    "Analytics": ["Tableau CRM", "Einstein", "Wave", "Reports"],
+    "Einstein AI": ["GPT Integration", "Voice", "Vision", "Prediction"],
+    "Tableau": ["2023.3", "Server", "Online", "Desktop"],
+    "Slack": ["Enterprise Grid", "Business+", "Standard", "Connect"]
+  },
+  "Oracle": {
+    "Database": ["23c", "21c", "19c", "Express 21c"],
+    "Cloud Infrastructure": ["Gen 2", "Government", "Dedicated", "@Customer"],
+    "Java": ["21 LTS", "17 LTS", "11 LTS", "SE 8"],
+    "MySQL": ["8.2", "8.0", "HeatWave", "Cluster 8.0"],
+    "WebLogic": ["14.1.1", "12.2.1.4", "Kubernetes", "Cloud"],
+    "Enterprise Manager": ["13.5", "Cloud Control", "Ops Center", "Database"],
+    "Fusion Applications": ["23D", "23C", "23B", "SaaS"],
+    "Autonomous Database": ["23c", "JSON", "Graph", "Serverless"],
+    "Exadata": ["X10M", "X9M", "Cloud@Customer", "Database Machine"],
+    "HCM Cloud": ["23D", "Recruiting", "Talent", "Payroll"]
+  },
+  "Adobe": {
+    "Photoshop": ["2024", "2023", "Elements 2024", "Camera Raw 16"],
+    "Illustrator": ["2024", "2023", "Draw Mobile", "Vector"],
+    "Premiere Pro": ["2024", "2023", "Elements 2024", "Rush 2.0"],
+    "After Effects": ["2024", "2023", "Beta", "Mobile Preview"],
+    "Acrobat": ["DC 2023", "Pro DC", "Standard DC", "Reader DC"],
+    "Creative Cloud": ["Desktop 5.9", "Libraries", "Fonts", "Stock"],
+    "Experience Manager": ["Cloud Service", "6.5", "Forms", "Assets"],
+    "Analytics": ["Customer Journey", "Real-time CDP", "Target", "Campaign"],
+    "Target": ["Premium", "Standard", "Mobile", "Recommendations"],
+    "Campaign": ["v8", "Standard", "Classic v7", "Managed Services"]
+  },
+  "NVIDIA": {
+    "GeForce": ["RTX 4090", "RTX 4080", "RTX 4070", "GTX 1660"],
+    "RTX": ["4090", "4080 Super", "4070 Ti", "4060"],
+    "CUDA": ["12.3", "12.2", "11.8", "Toolkit"],
+    "Omniverse": ["2023.2", "Create", "View", "Enterprise"],
+    "Drive": ["Hyperion 9", "Xavier", "Orin", "Sim 2023"],
+    "Jetson": ["Orin Nano", "AGX Orin", "Xavier NX", "Nano"],
+    "Clara": ["Holoscan 2.0", "Parabricks 4.2", "Discovery", "Imaging"],
+    "DGX": ["H100", "A100", "Station A100", "Cloud"],
+    "A100": ["80GB", "40GB", "SXM", "PCIe"],
+    "Shield": ["TV Pro", "TV", "Portable", "Controller"]
+  }
+};
+
+// UUID map for each company + product combination
+const PRODUCT_UUIDS = {
+  "Microsoft": {
+    "Windows": "550e8400-e29b-41d4-a716-446655440000",
+    "Office 365": "550e8400-e29b-41d4-a716-446655440001", 
+    "Azure": "550e8400-e29b-41d4-a716-446655440002",
+    "Teams": "550e8400-e29b-41d4-a716-446655440003",
+    "Visual Studio": "550e8400-e29b-41d4-a716-446655440004",
+    "Xbox": "550e8400-e29b-41d4-a716-446655440005",
+    "Surface": "550e8400-e29b-41d4-a716-446655440006",
+    "SQL Server": "550e8400-e29b-41d4-a716-446655440007",
+    "Power BI": "550e8400-e29b-41d4-a716-446655440008",
+    "SharePoint": "550e8400-e29b-41d4-a716-446655440009"
+  },
+  "Apple": {
+    "iPhone": "550e8400-e29b-41d4-a716-446655440010",
+    "iPad": "550e8400-e29b-41d4-a716-446655440011",
+    "Mac": "550e8400-e29b-41d4-a716-446655440012",
+    "Apple Watch": "550e8400-e29b-41d4-a716-446655440013",
+    "AirPods": "550e8400-e29b-41d4-a716-446655440014",
+    "macOS": "550e8400-e29b-41d4-a716-446655440015",
+    "iOS": "550e8400-e29b-41d4-a716-446655440016",
+    "Apple TV": "550e8400-e29b-41d4-a716-446655440017",
+    "Safari": "550e8400-e29b-41d4-a716-446655440018",
+    "iCloud": "550e8400-e29b-41d4-a716-446655440019"
+  },
+  "Google": {
+    "Search": "550e8400-e29b-41d4-a716-446655440020",
+    "Gmail": "550e8400-e29b-41d4-a716-446655440021",
+    "Android": "550e8400-e29b-41d4-a716-446655440022",
+    "Chrome": "550e8400-e29b-41d4-a716-446655440023",
+    "YouTube": "550e8400-e29b-41d4-a716-446655440024",
+    "Google Cloud": "550e8400-e29b-41d4-a716-446655440025",
+    "Drive": "550e8400-e29b-41d4-a716-446655440026",
+    "Maps": "550e8400-e29b-41d4-a716-446655440027",
+    "Ads": "550e8400-e29b-41d4-a716-446655440028",
+    "Workspace": "550e8400-e29b-41d4-a716-446655440029"
+  },
+  "Amazon": {
+    "AWS": "550e8400-e29b-41d4-a716-446655440030",
+    "Prime": "550e8400-e29b-41d4-a716-446655440031",
+    "Alexa": "550e8400-e29b-41d4-a716-446655440032",
+    "Kindle": "550e8400-e29b-41d4-a716-446655440033",
+    "Echo": "550e8400-e29b-41d4-a716-446655440034",
+    "S3": "550e8400-e29b-41d4-a716-446655440035",
+    "EC2": "550e8400-e29b-41d4-a716-446655440036",
+    "Lambda": "550e8400-e29b-41d4-a716-446655440037",
+    "DynamoDB": "550e8400-e29b-41d4-a716-446655440038",
+    "Fire TV": "550e8400-e29b-41d4-a716-446655440039"
+  },
+  "Meta": {
+    "Facebook": "550e8400-e29b-41d4-a716-446655440040",
+    "Instagram": "550e8400-e29b-41d4-a716-446655440041",
+    "WhatsApp": "550e8400-e29b-41d4-a716-446655440042",
+    "Messenger": "550e8400-e29b-41d4-a716-446655440043",
+    "Portal": "550e8400-e29b-41d4-a716-446655440044",
+    "Oculus": "550e8400-e29b-41d4-a716-446655440045",
+    "Workplace": "550e8400-e29b-41d4-a716-446655440046",
+    "Reality Labs": "550e8400-e29b-41d4-a716-446655440047",
+    "Threads": "550e8400-e29b-41d4-a716-446655440048",
+    "Quest": "550e8400-e29b-41d4-a716-446655440049"
+  },
+  "Netflix": {
+    "Streaming Service": "550e8400-e29b-41d4-a716-446655440050",
+    "Originals": "550e8400-e29b-41d4-a716-446655440051",
+    "Downloads": "550e8400-e29b-41d4-a716-446655440052",
+    "Profiles": "550e8400-e29b-41d4-a716-446655440053",
+    "Games": "550e8400-e29b-41d4-a716-446655440054",
+    "Interactive Content": "550e8400-e29b-41d4-a716-446655440055",
+    "4K HDR": "550e8400-e29b-41d4-a716-446655440056",
+    "Dolby Atmos": "550e8400-e29b-41d4-a716-446655440057",
+    "Kids Mode": "550e8400-e29b-41d4-a716-446655440058",
+    "Mobile App": "550e8400-e29b-41d4-a716-446655440059"
+  },
+  "Salesforce": {
+    "CRM": "550e8400-e29b-41d4-a716-446655440060",
+    "Sales Cloud": "550e8400-e29b-41d4-a716-446655440061",
+    "Service Cloud": "550e8400-e29b-41d4-a716-446655440062",
+    "Marketing Cloud": "550e8400-e29b-41d4-a716-446655440063",
+    "Commerce Cloud": "550e8400-e29b-41d4-a716-446655440064",
+    "Platform": "550e8400-e29b-41d4-a716-446655440065",
+    "Analytics": "550e8400-e29b-41d4-a716-446655440066",
+    "Einstein AI": "550e8400-e29b-41d4-a716-446655440067",
+    "Tableau": "550e8400-e29b-41d4-a716-446655440068",
+    "Slack": "550e8400-e29b-41d4-a716-446655440069"
+  },
+  "Oracle": {
+    "Database": "550e8400-e29b-41d4-a716-446655440070",
+    "Cloud Infrastructure": "550e8400-e29b-41d4-a716-446655440071",
+    "Java": "550e8400-e29b-41d4-a716-446655440072",
+    "MySQL": "550e8400-e29b-41d4-a716-446655440073",
+    "WebLogic": "550e8400-e29b-41d4-a716-446655440074",
+    "Enterprise Manager": "550e8400-e29b-41d4-a716-446655440075",
+    "Fusion Applications": "550e8400-e29b-41d4-a716-446655440076",
+    "Autonomous Database": "550e8400-e29b-41d4-a716-446655440077",
+    "Exadata": "550e8400-e29b-41d4-a716-446655440078",
+    "HCM Cloud": "550e8400-e29b-41d4-a716-446655440079"
+  },
+  "Adobe": {
+    "Photoshop": "550e8400-e29b-41d4-a716-446655440080",
+    "Illustrator": "550e8400-e29b-41d4-a716-446655440081",
+    "Premiere Pro": "550e8400-e29b-41d4-a716-446655440082",
+    "After Effects": "550e8400-e29b-41d4-a716-446655440083",
+    "Acrobat": "550e8400-e29b-41d4-a716-446655440084",
+    "Creative Cloud": "550e8400-e29b-41d4-a716-446655440085",
+    "Experience Manager": "550e8400-e29b-41d4-a716-446655440086",
+    "Analytics": "550e8400-e29b-41d4-a716-446655440087",
+    "Target": "550e8400-e29b-41d4-a716-446655440088",
+    "Campaign": "550e8400-e29b-41d4-a716-446655440089"
+  },
+  "NVIDIA": {
+    "GeForce": "550e8400-e29b-41d4-a716-446655440090",
+    "RTX": "550e8400-e29b-41d4-a716-446655440091",
+    "CUDA": "550e8400-e29b-41d4-a716-446655440092",
+    "Omniverse": "550e8400-e29b-41d4-a716-446655440093",
+    "Drive": "550e8400-e29b-41d4-a716-446655440094",
+    "Jetson": "550e8400-e29b-41d4-a716-446655440095",
+    "Clara": "550e8400-e29b-41d4-a716-446655440096",
+    "DGX": "550e8400-e29b-41d4-a716-446655440097",
+    "A100": "550e8400-e29b-41d4-a716-446655440098",
+    "Shield": "550e8400-e29b-41d4-a716-446655440099"
+  }
+};
+
+// Search function that accepts productId (UUID), productName, and versionId
+const searchProducts = (productId, productName, versionId) => {
+  const results = [];
+  
+  // Iterate through all companies and products
+  for (const company in TECH_COMPANIES) {
+    const companyName = TECH_COMPANIES[company];
+    const products = COMPANY_PRODUCTS[companyName] || [];
+    
+    for (const product of products) {
+      const uuid = PRODUCT_UUIDS[companyName]?.[product];
+      const releases = PRODUCT_RELEASES[companyName]?.[product] || [];
+      
+      // Check if this product matches search criteria
+      let matches = true;
+      
+      // Filter by productId (UUID) if provided
+      if (productId && productId.trim()) {
+        const searchUUID = productId.trim().toLowerCase();
+        if (!uuid || !uuid.toLowerCase().includes(searchUUID)) {
+          matches = false;
+        }
+      }
+      
+      // Filter by productName (matches company and/or product name) if provided
+      if (productName && productName.trim()) {
+        const searchTerm = productName.trim().toLowerCase();
+        const companyMatch = companyName.toLowerCase().includes(searchTerm);
+        const productMatch = product.toLowerCase().includes(searchTerm);
+        
+        if (!companyMatch && !productMatch) {
+          matches = false;
+        }
+      }
+      
+      // Filter by versionId if provided
+      if (versionId && versionId.trim()) {
+        const searchVersion = versionId.trim().toLowerCase();
+        const versionMatch = releases.some(release => 
+          release.toLowerCase().includes(searchVersion)
+        );
+        
+        if (!versionMatch) {
+          matches = false;
+        }
+      }
+      
+      // If all criteria match, add to results
+      if (matches) {
+        // Add each matching release as a separate result
+        const matchingReleases = versionId && versionId.trim() 
+          ? releases.filter(release => release.toLowerCase().includes(versionId.trim().toLowerCase()))
+          : releases;
+        
+        for (const release of matchingReleases) {
+          results.push({
+            uuid: uuid,
+            company: companyName,
+            product: product,
+            version: release,
+            label: `${companyName} ${product} - ${release}`,
+            value: `${uuid}_${release}`,
+            productId: uuid,
+            productName: `${companyName} ${product}`,
+            versionId: release
+          });
+        }
+      }
+    }
+  }
+  
+  return results;
+};
+
 const View = () => {
   const [fieldValue, setFieldValue] = useState(null);
   const [issueKey, setIssueKey] = useState(null);
@@ -69,223 +449,20 @@ const View = () => {
       productName: f2,
       versionId: f3,
     });
-    const mockResults = [
-      {
-        label: `Product ${f1 || "ABC"} - Version ${f3 || "1.0"}`,
-        value: "result1",
-        productId: f1 || "ABC",
-        productName: `${f1 || "ABC"} Product`,
-        versionId: f3 || "1.0",
-      },
-      { 
-        label: `${f2 || "Sample Product"} - Latest Version`, 
-        value: "result2",
-        productId: "SMPL",
-        productName: f2 || "Sample Product",
-        versionId: "latest",
-      },
-      { 
-        label: `Related Product - Version ${f3 || "2.0"}`, 
-        value: "result3",
-        productId: "REL",
-        productName: "Related Product",
-        versionId: f3 || "2.0",
-      },
-      { 
-        label: `${f1 || "XYZ"} Product Bundle`, 
-        value: "result4",
-        productId: f1 || "XYZ",
-        productName: `${f1 || "XYZ"} Product Bundle`,
-        versionId: "bundle",
-      },
-      { 
-        label: `Legacy ${f2 || "Product"} - Archived`, 
-        value: "result5",
-        productId: "LGC",
-        productName: `Legacy ${f2 || "Product"}`,
-        versionId: "archived",
-      },
-      {
-        label: `Enterprise ${f2 || "Solution"} - Version ${f3 || "3.1"}`,
-        value: "result6",
-        productId: "ENT",
-        productName: `Enterprise ${f2 || "Solution"}`,
-        versionId: f3 || "3.1",
-      },
-      {
-        label: `${f1 || "CORE"}-${f2 || "Database"} - Production Build`,
-        value: "result7",
-        productId: f1 || "CORE",
-        productName: `${f1 || "CORE"} ${f2 || "Database"}`,
-        versionId: "production",
-      },
-      {
-        label: `Mobile ${f2 || "App"} - Version ${f3 || "2.5.1"}`,
-        value: "result8",
-        productId: "MOB",
-        productName: `Mobile ${f2 || "App"}`,
-        versionId: f3 || "2.5.1",
-      },
-      {
-        label: `${f2 || "Analytics"} Platform - Beta ${f3 || "4.0"}`,
-        value: "result9",
-        productId: "ANLYT",
-        productName: `${f2 || "Analytics"} Platform`,
-        versionId: `beta-${f3 || "4.0"}`,
-      },
-      {
-        label: `${f1 || "API"} Gateway - Version ${f3 || "1.8.2"}`,
-        value: "result10",
-        productId: f1 || "API",
-        productName: `${f1 || "API"} Gateway`,
-        versionId: f3 || "1.8.2",
-      },
-      { 
-        label: `Security ${f2 || "Module"} - Patch ${f3 || "2.3.4"}`, 
-        value: "result11",
-        productId: "SEC",
-        productName: `Security ${f2 || "Module"}`,
-        versionId: f3 || "2.3.4",
-      },
-      { 
-        label: `${f2 || "Backup"} Service - LTS Version`, 
-        value: "result12",
-        productId: "BKUP",
-        productName: `${f2 || "Backup"} Service`,
-        versionId: "lts",
-      },
-      { 
-        label: `${f1 || "ML"}-${f2 || "Engine"} - Version ${f3 || "5.0"}`, 
-        value: "result13",
-        productId: f1 || "ML",
-        productName: `${f1 || "ML"} ${f2 || "Engine"}`,
-        versionId: f3 || "5.0",
-      },
-      { 
-        label: `Integration ${f2 || "Hub"} - Release ${f3 || "3.7"}`, 
-        value: "result14",
-        productId: "INTG",
-        productName: `Integration ${f2 || "Hub"}`,
-        versionId: f3 || "3.7",
-      },
-      { 
-        label: `Cloud ${f1 || "SERVICE"} - Stable Release`, 
-        value: "result15",
-        productId: f1 || "CLD",
-        productName: `Cloud ${f1 || "SERVICE"}`,
-        versionId: "stable",
-      },
-      { 
-        label: `DevOps ${f2 || "Pipeline"} - Build ${f3 || "1.2.3"}`, 
-        value: "result16",
-        productId: "DVOPS",
-        productName: `DevOps ${f2 || "Pipeline"}`,
-        versionId: f3 || "1.2.3",
-      },
-      { 
-        label: `Monitoring ${f2 || "Dashboard"} - Version ${f3 || "4.5"}`, 
-        value: "result17",
-        productId: "MON",
-        productName: `Monitoring ${f2 || "Dashboard"}`,
-        versionId: f3 || "4.5",
-      },
-      { 
-        label: `${f1 || "WEB"}-${f2 || "Framework"} - Release ${f3 || "2.1"}`, 
-        value: "result18",
-        productId: f1 || "WEB",
-        productName: `${f1 || "WEB"} ${f2 || "Framework"}`,
-        versionId: f3 || "2.1",
-      },
-      { 
-        label: `Testing ${f2 || "Suite"} - Version ${f3 || "3.8.1"}`, 
-        value: "result19",
-        productId: "TEST",
-        productName: `Testing ${f2 || "Suite"}`,
-        versionId: f3 || "3.8.1",
-      },
-      { 
-        label: `${f2 || "Authentication"} Service - Patch ${f3 || "1.4.2"}`, 
-        value: "result20",
-        productId: "AUTH",
-        productName: `${f2 || "Authentication"} Service`,
-        versionId: f3 || "1.4.2",
-      },
-      { 
-        label: `Report ${f2 || "Generator"} - Version ${f3 || "2.7"}`, 
-        value: "result21",
-        productId: "RPT",
-        productName: `Report ${f2 || "Generator"}`,
-        versionId: f3 || "2.7",
-      },
-      { 
-        label: `${f1 || "DATA"}-${f2 || "Warehouse"} - Build ${f3 || "5.1"}`, 
-        value: "result22",
-        productId: f1 || "DATA",
-        productName: `${f1 || "DATA"} ${f2 || "Warehouse"}`,
-        versionId: f3 || "5.1",
-      },
-      { 
-        label: `Logging ${f2 || "Framework"} - Release ${f3 || "1.9"}`, 
-        value: "result23",
-        productId: "LOG",
-        productName: `Logging ${f2 || "Framework"}`,
-        versionId: f3 || "1.9",
-      },
-      { 
-        label: `${f2 || "Cache"} Manager - Version ${f3 || "3.2.1"}`, 
-        value: "result24",
-        productId: "CACHE",
-        productName: `${f2 || "Cache"} Manager`,
-        versionId: f3 || "3.2.1",
-      },
-      { 
-        label: `Network ${f2 || "Tools"} - Stable ${f3 || "4.0"}`, 
-        value: "result25",
-        productId: "NET",
-        productName: `Network ${f2 || "Tools"}`,
-        versionId: `stable-${f3 || "4.0"}`,
-      },
-      { 
-        label: `${f1 || "UI"}-${f2 || "Component"} - Version ${f3 || "6.1"}`, 
-        value: "result26",
-        productId: f1 || "UI",
-        productName: `${f1 || "UI"} ${f2 || "Component"}`,
-        versionId: f3 || "6.1",
-      },
-      { 
-        label: `Workflow ${f2 || "Engine"} - Release ${f3 || "2.4"}`, 
-        value: "result27",
-        productId: "WF",
-        productName: `Workflow ${f2 || "Engine"}`,
-        versionId: f3 || "2.4",
-      },
-      { 
-        label: `${f2 || "Search"} Index - Build ${f3 || "1.7.3"}`, 
-        value: "result28",
-        productId: "SRCH",
-        productName: `${f2 || "Search"} Index`,
-        versionId: f3 || "1.7.3",
-      },
-      { 
-        label: `Message ${f2 || "Queue"} - Version ${f3 || "4.2"}`, 
-        value: "result29",
-        productId: "MSG",
-        productName: `Message ${f2 || "Queue"}`,
-        versionId: f3 || "4.2",
-      },
-      { 
-        label: `${f1 || "SYNC"}-${f2 || "Service"} - Patch ${f3 || "3.5.1"}`, 
-        value: "result30",
-        productId: f1 || "SYNC",
-        productName: `${f1 || "SYNC"} ${f2 || "Service"}`,
-        versionId: f3 || "3.5.1",
-      },
-    ];
 
-    setSearchResults(mockResults);
+    // Use the new search function instead of mock results
+    const searchResults = searchProducts(f1.trim(), f2.trim(), f3.trim());
+    
+    setSearchResults(searchResults);
+    
+    // Auto-select first entry if results are found
+    if (searchResults.length > 0) {
+      setSelected(searchResults[0]);
+    }
+    
     console.log(
       `search results for field value: ${f1} ${f2} ${f3}`,
-      mockResults
+      searchResults
     );
   };
 
