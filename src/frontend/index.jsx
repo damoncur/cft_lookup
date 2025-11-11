@@ -25,6 +25,7 @@ const View = () => {
   const [f1, setF1] = useState("");
   const [f2, setF2] = useState("");
   const [f3, setF3] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
     view.getContext().then((context) => {
@@ -34,6 +35,44 @@ const View = () => {
 
   const handleSearchClick = () => {
     setIsModalOpen(true);
+
+    // Generate mock search results based on current field values
+    const mockResults = [
+      {
+        label: `Product ${f1 || "ABC"} - Version ${f3 || "1.0"}`,
+        value: "result1",
+      },
+      { label: `${f2 || "Sample Product"} - Latest Version`, value: "result2" },
+      { label: `Related Product - Version ${f3 || "2.0"}`, value: "result3" },
+      { label: `${f1 || "XYZ"} Product Bundle`, value: "result4" },
+      { label: `Legacy ${f2 || "Product"} - Archived`, value: "result5" },
+      {
+        label: `Enterprise ${f2 || "Solution"} - Version ${f3 || "3.1"}`,
+        value: "result6",
+      },
+      {
+        label: `${f1 || "CORE"}-${f2 || "Database"} - Production Build`,
+        value: "result7",
+      },
+      {
+        label: `Mobile ${f2 || "App"} - Version ${f3 || "2.5.1"}`,
+        value: "result8",
+      },
+      {
+        label: `${f2 || "Analytics"} Platform - Beta ${f3 || "4.0"}`,
+        value: "result9",
+      },
+      {
+        label: `${f1 || "API"} Gateway - Version ${f3 || "1.8.2"}`,
+        value: "result10",
+      },
+    ];
+
+    setSearchResults(mockResults);
+    console.log(
+      `search results for field value: ${f1} ${f2} ${f3}`,
+      mockResults
+    );
   };
 
   const handleCloseModal = () => {
@@ -41,6 +80,7 @@ const View = () => {
     setF1("");
     setF2("");
     setF3("");
+    setSearchResults([]);
   };
 
   const handleModalSearch = () => {
@@ -55,32 +95,41 @@ const View = () => {
     // For now, we'll just log the values
   };
 
+  // Check if all search fields are empty by concatenating trimmed values
+  const isSearchDisabled = f1.trim() + f2.trim() + f3.trim() === "";
+
+  const handleClearFields = () => {
+    setF1("");
+    setF2("");
+    setF3("");
+  };
+
   return (
     <>
-      <Stack space="space.100">
-        <Inline space="space.100" alignBlock="end">
-          <Box as="span" xcss={{ width: "32px" }}>
-            <Tooltip text="Click to search">
-              <Button
-                iconBefore="search"
-                spacing="compact"
-                onClick={handleSearchClick}
-              />
-            </Tooltip>
-          </Box>
-          <Text size="small">{`${fieldValue || "world"}!`}</Text>
-        </Inline>
-      </Stack>
+      <Inline space="space.100" alignBlock="end">
+        <Box as="span" xcss={{ width: "32px" }}>
+          <Tooltip text="Click to search">
+            <Button
+              iconBefore="search"
+              spacing="compact"
+              onClick={handleSearchClick}
+            />
+          </Tooltip>
+        </Box>
+        <Text size="small">{`${fieldValue || "world"}!`}</Text>
+      </Inline>
 
       <ModalTransition>
         {isModalOpen && (
           <Modal onClose={handleCloseModal} width="medium">
             <ModalHeader>
-              <ModalTitle>Field Search Results</ModalTitle>
+              <ModalTitle>TPPC Lookup</ModalTitle>
             </ModalHeader>
             <ModalBody>
               <Stack space="space.100">
-                <Text size="small">You clicked the search button for the field value:</Text>
+                <Text size="small">
+                  You clicked the search button for the field value:
+                </Text>
                 <Box
                   xcss={{
                     padding: "space.100",
@@ -88,7 +137,9 @@ const View = () => {
                     borderRadius: "4px",
                   }}
                 >
-                  <Text as="strong" size="small">{fieldValue || "No value entered"}</Text>
+                  <Text as="strong" size="small">
+                    {fieldValue || "No value entered"}
+                  </Text>
                 </Box>
                 <Inline space="space.100" alignBlock="end">
                   <Stack>
@@ -125,16 +176,27 @@ const View = () => {
                     />
                   </Stack>
                 </Inline>
-                <Box>
-                  <Button onClick={handleModalSearch}>Search </Button>
-                </Box>
+                <Inline space="space.100">
+                  <Button
+                    onClick={handleModalSearch}
+                    isDisabled={isSearchDisabled}
+                  >
+                    Search
+                  </Button>
+                  <Button
+                    appearance="subtle"
+                    onClick={handleClearFields}
+                    xcss={{ display: isSearchDisabled ? "none" : "block" }}
+                  >
+                    Clear
+                  </Button>
+                </Inline>
 
-                <Text size="small">
-                  This modal demonstrates how you can display search results,
-                  field information, or any other content instead of using basic
-                  alerts. You could integrate with APIs, show lookup results, or
-                  provide interactive functionality here.
+                <Text size="large" as="strong">
+                  Search Results:
                 </Text>
+
+                <Text size="small">this it important</Text>
               </Stack>
             </ModalBody>
             <ModalFooter>
