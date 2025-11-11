@@ -402,6 +402,112 @@ const searchProducts = (productId, productName, versionId) => {
   return results;
 };
 
+// Search Jira custom fields by name and return the custom field ID
+const searchJiraCustomFieldByName = async (fieldName) => {
+  try {
+    if (!fieldName || !fieldName.trim()) {
+      return null;
+    }
+
+    // Import requestJira from @forge/bridge for API calls
+    const { requestJira } = require('@forge/bridge');
+
+    // Call Jira REST API to get all fields (including custom fields)
+    const response = await requestJira('/rest/api/3/field', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch Jira fields:', response.status, response.statusText);
+      return null;
+    }
+
+    const fields = await response.json();
+    const searchTerm = fieldName.trim().toLowerCase();
+
+    console.log(`Searching for custom field with name containing: "${searchTerm}"`);
+
+    // Filter for custom fields that match the search term
+    const matchingCustomFields = fields
+      .filter(field => 
+        field.id.startsWith('customfield_') && 
+        field.name.toLowerCase().includes(searchTerm)
+      )
+      .map(field => ({
+        customFieldId: field.id,
+        fieldName: field.name,
+        fieldKey: field.key || field.id,
+        fieldType: field.schema?.type || 'unknown',
+        custom: field.custom || false,
+        searchable: field.searchable || false
+      }));
+
+    console.log(`Found ${matchingCustomFields.length} matching custom fields:`, matchingCustomFields);
+
+    // Return the first match or null if no matches
+    return matchingCustomFields.length > 0 ? matchingCustomFields[0] : null;
+
+  } catch (error) {
+    console.error('Error searching Jira custom fields:', error);
+    return null;
+  }
+};
+
+// Update multiple Jira custom fields in a single API call
+const updateJiraCustomFields = async (issueKey, cf1, cf2, cf3, cf1Value, cf2Value, cf3Value) => {
+  try {
+    if (!issueKey || !cf1 || !cf2 || !cf3) {
+      console.error('Missing required parameters: issueKey or custom field IDs');
+      return false;
+    }
+
+    // Import requestJira from @forge/bridge for API calls
+    const { requestJira } = require('@forge/bridge');
+
+    // Prepare the field update data - always expecting three custom field values
+    const updateData = {
+      fields: {
+        [cf1]: cf1Value,
+        [cf2]: cf2Value,
+        [cf3]: cf3Value
+      }
+    };
+
+    console.log(`Updating issue ${issueKey} with custom fields:`, {
+      [cf1]: cf1Value,
+      [cf2]: cf2Value,
+      [cf3]: cf3Value
+    });
+
+    // Call Jira REST API to update the issue's custom fields
+    const response = await requestJira(`/rest/api/3/issue/${issueKey}`, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updateData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to update Jira custom fields:', response.status, response.statusText, errorData);
+      return false;
+    }
+
+    console.log(`Successfully updated custom fields for issue ${issueKey}`);
+    return true;
+
+  } catch (error) {
+    console.error('Error updating Jira custom fields:', error);
+    return false;
+  }
+};
+
 const View = () => {
   const [fieldValue, setFieldValue] = useState(null);
   const [issueKey, setIssueKey] = useState(null);
@@ -474,6 +580,21 @@ const View = () => {
     setSearchResults([]);
   };
 
+  const handleSelectModal = () => {
+    if (selected) {
+      const cf1 = searchJiraCustomFieldByName("TPPC Product ID");
+      const cf2 = searchJiraCustomFieldByName("TPPC Product Name");
+      const cf3 = searchJiraCustomFieldByName("TPPC Version ID");
+
+      // Log the custom field lookups
+      Promise.all([cf1, cf2, cf3]).then((customFields) => {
+        console.log("Custom Field Lookups:", customFields);
+      });
+      updateJiraCustomFields(issueKey, cf1.customFieldId, cf2.customFieldId, cf3.customFieldId, selected.productId, selected.company + ' ' +selected.productName , selected.versionId);  
+      setIsModalOpen(false);
+    }
+  };
+
   // Check if all search fields are empty by concatenating trimmed values
   const isSearchDisabled = f1.trim() + f2.trim() + f3.trim() === "";
 
@@ -484,6 +605,8 @@ const View = () => {
     setSearchResults([]);
     setSelected(null);
   };
+
+  
 
   return (
     <>
@@ -607,8 +730,9 @@ const View = () => {
                 <Button appearance="subtle" onClick={handleCloseModal}>
                   Close
                 </Button>
-                <Button appearance="primary" onClick={handleCloseModal}>
-                  OK
+                <Button appearance="primary" onClick={handleSelectModal}
+                  isDisabled={!selected} >
+                  Select
                 </Button>
               </ButtonGroup>
             </ModalFooter>
