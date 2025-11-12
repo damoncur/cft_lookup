@@ -13,6 +13,7 @@ import {
   searchJiraCustomFieldByName,
   updateJiraCustomFields,
 } from "./SearchModal";
+import { fetchJiraFields } from "./util";
 
 const Edit = () => {
   const [value, setValue] = useState("");
@@ -23,6 +24,8 @@ const Edit = () => {
   const [f3, setF3] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [jiraFields, setJiraFields] = useState([]);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
 
   useEffect(() => {
     const getContextData = async () => {
@@ -45,6 +48,25 @@ const Edit = () => {
     };
 
     getContextData();
+  }, []);
+
+  useEffect(() => {
+    const loadJiraFields = async () => {
+      try {
+        setFieldsLoading(true);
+        const fields = await fetchJiraFields();
+        setJiraFields(fields);
+      } catch (error) {
+        console.error("Error loading Jira fields:", error);
+      } finally {
+        setFieldsLoading(false);
+      }
+    };
+
+    // Only fetch fields when modal opens and we don't have them cached
+    if (jiraFields.length === 0) {
+      loadJiraFields();
+    }
   }, []);
 
   const onSubmit = useCallback(async () => {
@@ -90,9 +112,9 @@ const Edit = () => {
     if (selected && issueKey) {
       try {
         // Search for the custom field IDs
-        const cf1 = await searchJiraCustomFieldByName("TPPC Product ID");
-        const cf2 = await searchJiraCustomFieldByName("TPPC Product Name");
-        const cf3 = await searchJiraCustomFieldByName("TPPC Version ID");
+        const cf1 = await searchJiraCustomFieldByName("TPPC Product ID", jiraFields);
+        const cf2 = await searchJiraCustomFieldByName("TPPC Product Name", jiraFields);
+        const cf3 = await searchJiraCustomFieldByName("TPPC Version ID", jiraFields);
 
         console.log("Custom Field Lookups:", { cf1, cf2, cf3 });
 

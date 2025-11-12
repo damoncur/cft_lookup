@@ -16,6 +16,7 @@ import {
   searchJiraCustomFieldByName,
   updateJiraCustomFields,
 } from "./SearchModal";
+import { fetchJiraFields } from "./util";
 
 const View = () => {
   const [fieldValue, setFieldValue] = useState(null);
@@ -26,6 +27,9 @@ const View = () => {
   const [f3, setF3] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [jiraFields, setJiraFields] = useState([]);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
+
   useEffect(() => {
     const getContextData = async () => {
       try {
@@ -47,6 +51,65 @@ const View = () => {
     };
 
     getContextData();
+  }, []);
+
+  useEffect(() => {
+    const loadJiraFields = async () => {
+      try {
+        setFieldsLoading(true);
+        const fields = await fetchJiraFields();
+        setJiraFields(fields);
+      } catch (error) {
+        console.error("Error loading Jira fields:", error);
+      } finally {
+        setFieldsLoading(false);
+      }
+    };
+
+    // Only fetch fields when modal opens and we don't have them cached
+    if( jiraFields.length === 0 ) {
+      loadJiraFields();
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchJiraFields = async () => {
+      try {
+        setFieldsLoading(true);
+        console.log("Fetching Jira fields...");
+
+        const response = await requestJira("/rest/api/3/field", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+        console.log(`Response: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch Jira fields:",
+            response.status,
+            response.statusText
+          );
+          return;
+        }
+
+        const fields = await response.json();
+        console.log(`Retrieved ${fields.length} fields from Jira`);
+        setJiraFields(fields);
+      } catch (error) {
+        console.error("Error fetching Jira fields:", error);
+      } finally {
+        setFieldsLoading(false);
+      }
+    };
+
+    // Only fetch fields when modal opens and we don't have them cached
+      fetchJiraFields();
+
+    
   }, []);
 
   const handleSearchClick = () => {
@@ -91,16 +154,16 @@ const View = () => {
 
   const handleSelectModal = async () => {
     if (selected) {
-      const cf1 = await searchJiraCustomFieldByName("TPPC Product ID");
+      const cf1 = await searchJiraCustomFieldByName("TPPC Product ID", jiraFields);
       console.log("Searching for custom field: TPPC Product ID");
-      const cf2 = await searchJiraCustomFieldByName("TPPC Product Name");
+      const cf2 = await searchJiraCustomFieldByName("TPPC Product Name", jiraFields);
       console.log("Searching for custom field: TPPC Product Name ");
-      const cf3 = await searchJiraCustomFieldByName("TPPC Version ID");
+      const cf3 = await searchJiraCustomFieldByName("TPPC Version ID", jiraFields);
       console.log("Searching for custom field: TPPC Product ID");
 
       console.log("cfids", cf1, cf2, cf3);
       // Log the custom field lookups
-      
+
       const updateSuccess = await updateJiraCustomFields(
         issueKey,
         cf1.customFieldId,

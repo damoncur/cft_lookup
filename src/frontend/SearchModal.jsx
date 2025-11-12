@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   ModalBody,
@@ -16,6 +16,8 @@ import {
   Text,
   Inline,
 } from "@forge/react";
+import { requestJira } from "@forge/bridge";
+import { fetchJiraFields } from "./util";
 
 // Popular tech giant company names (top 10)
 const TECH_COMPANIES = [
@@ -812,38 +814,24 @@ const searchProducts = (productId, productName, versionId) => {
   return results;
 };
 
-// Search Jira custom fields by name and return the custom field ID
-const searchJiraCustomFieldByName = async (fieldName) => {
+// Search Jira custom fields by name using cached fields
+const searchJiraCustomFieldByName = (fieldName, cachedFields) => {
+  if (!fieldName || !fieldName.trim()) {
+    throw new Error(
+      "Field name is missing and is required for Jira field search"
+    );
+  }
+
+  if (!cachedFields || cachedFields.length === 0) {
+    throw new Error(
+      "Cached Jira fields are not available - cannot proceed with field search. Please ensure the modal has loaded the fields successfully."
+    );
+  }
+
   try {
-    if (!fieldName || !fieldName.trim()) {
+    console.log(`Searching cached Jira fields for name: "${fieldName}"`);
+    console.log(`Using cached fields (${cachedFields.length} total)`);
 
-      console.log("field is missing and is required");
-      return null;
-    }
-    console.log(`Searching Jira custom fields for name: "${fieldName}"`);
-    // Import requestJira from @forge/bridge for API calls
-    const { requestJira } = require("@forge/bridge");
-
-    // Call Jira REST API to get all fields (including custom fields)
-    const response = await requestJira("/rest/api/3/field", {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      console.error(
-        "Failed to fetch Jira fields:",
-        response.status,
-        response.statusText
-      );
-      return null;
-    }
-
-    const fields = await response.json();
-    console.log(`Retrieved ${fields.length} fields from Jira`);
     const searchTerm = fieldName.trim().toLowerCase();
 
     console.log(
@@ -851,7 +839,7 @@ const searchJiraCustomFieldByName = async (fieldName) => {
     );
 
     // Filter for custom fields that match the search term
-    const matchingCustomFields = fields
+    const matchingCustomFields = cachedFields
       .filter(
         (field) =>
           field.id.startsWith("customfield_") &&
@@ -874,8 +862,8 @@ const searchJiraCustomFieldByName = async (fieldName) => {
     // Return the first match or null if no matches
     return matchingCustomFields.length > 0 ? matchingCustomFields[0] : null;
   } catch (error) {
-    console.error("Error searching Jira custom fields:", error);
-    return null;
+    console.log("Error searching Jira custom fields:", error);
+    // Re-throw the error to abort the app
   }
 };
 
@@ -898,7 +886,6 @@ const updateJiraCustomFields = async (
     }
 
     // Import requestJira from @forge/bridge for API calls
-    const { requestJira } = require("@forge/bridge");
 
     // Prepare the field update data - always expecting three custom field values
     const updateData = {
@@ -925,6 +912,7 @@ const updateJiraCustomFields = async (
       body: JSON.stringify(updateData),
     });
 
+    console.log(`Response: ${response.status} ${response.statusText}`);
     if (!response.ok) {
       const errorData = await response.json();
       console.error(
@@ -962,6 +950,10 @@ const SearchModal = ({
   onSearch,
   onClear,
 }) => {
+  // State to store Jira fields
+
+  // Fetch Jira fields when component mounts
+
   // Check if all search fields are empty by concatenating trimmed values
   const isSearchDisabled = f1.trim() + f2.trim() + f3.trim() === "";
 
